@@ -1,0 +1,175 @@
+From 528d649254311f1960e236341793ddc99709635e Mon Sep 17 00:00:00 2001
+From: hasufell <hasufell@hasufell.de>
+Date: Tue, 10 Feb 2015 03:21:59 +0100
+Subject: [PATCH] Use the PolarSSL successor mbedTLS
+
+---
+ configure.ac | 82 ++++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 41 insertions(+), 41 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index df1d372..6e2db44 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -147,7 +147,7 @@ AC_SUBST(PKGADD_VENDOR)
+ 
+ dnl
+ dnl initialize all the info variables
+-    curl_ssl_msg="no      (--with-{ssl,gnutls,nss,polarssl,cyassl,axtls,winssl,darwinssl} )"
++    curl_ssl_msg="no      (--with-{ssl,gnutls,nss,mbedtls,cyassl,axtls,winssl,darwinssl} )"
+     curl_ssh_msg="no      (--with-libssh2)"
+    curl_zlib_msg="no      (--with-zlib)"
+     curl_gss_msg="no      (--with-gssapi)"
+@@ -1837,64 +1837,64 @@ if test "$GNUTLS_ENABLED" = "1"; then
+ fi
+ 
+ dnl ----------------------------------------------------
+-dnl check for PolarSSL
++dnl check for mbedTLS
+ dnl ----------------------------------------------------
+ 
+-dnl Default to compiler & linker defaults for PolarSSL files & libraries.
+-OPT_POLARSSL=no
++dnl Default to compiler & linker defaults for mbedTLS files & libraries.
++OPT_MBEDTLS=no
+ 
+ _cppflags=$CPPFLAGS
+ _ldflags=$LDFLAGS
+-AC_ARG_WITH(polarssl,dnl
+-AC_HELP_STRING([--with-polarssl=PATH],[where to look for PolarSSL, PATH points to the installation root])
+-AC_HELP_STRING([--without-polarssl], [disable PolarSSL detection]),
+-  OPT_POLARSSL=$withval)
++AC_ARG_WITH(mbedtls,dnl
++AC_HELP_STRING([--with-mbedtls=PATH],[where to look for mbedTLS, PATH points to the installation root])
++AC_HELP_STRING([--without-mbedtls], [disable mbedTLS detection]),
++  OPT_MBEDTLS=$withval)
+ 
+ if test "$curl_ssl_msg" = "$init_ssl_msg"; then
+ 
+-  if test X"$OPT_POLARSSL" != Xno; then
++  if test X"$OPT_MBEDTLS" != Xno; then
+ 
+-    if test "$OPT_POLARSSL" = "yes"; then
+-      OPT_POLARSSL=""
++    if test "$OPT_MBEDTLS" = "yes"; then
++      OPT_MBEDTLS=""
+     fi
+ 
+-    if test -z "$OPT_POLARSSL" ; then
++    if test -z "$OPT_MBEDTLS" ; then
+       dnl check for lib first without setting any new path
+ 
+-      AC_CHECK_LIB(polarssl, havege_init,
+-      dnl libpolarssl found, set the variable
++      AC_CHECK_LIB(mbedtls, havege_init,
++      dnl libmbedtls found, set the variable
+        [
+-         AC_DEFINE(USE_POLARSSL, 1, [if PolarSSL is enabled])
+-         AC_SUBST(USE_POLARSSL, [1])
+-         POLARSSL_ENABLED=1
+-         USE_POLARSSL="yes"
+-         curl_ssl_msg="enabled (PolarSSL)"
++         AC_DEFINE(USE_MBEDTLS, 1, [if mbedTLS is enabled])
++         AC_SUBST(USE_MBEDTLS, [1])
++         MBEDTLS_ENABLED=1
++         USE_MBEDTLS="yes"
++         curl_ssl_msg="enabled (mbedTLS)"
+         ])
+     fi
+ 
+     addld=""
+     addlib=""
+     addcflags=""
+-    polarssllib=""
++    mbedtlslib=""
+ 
+-    if test "x$USE_POLARSSL" != "xyes"; then
++    if test "x$USE_MBEDTLS" != "xyes"; then
+       dnl add the path and test again
+-      addld=-L$OPT_POLARSSL/lib$libsuff
+-      addcflags=-I$OPT_POLARSSL/include
+-      polarssllib=$OPT_POLARSSL/lib$libsuff
++      addld=-L$OPT_MBEDTLS/lib$libsuff
++      addcflags=-I$OPT_MBEDTLS/include
++      mbedtlslib=$OPT_MBEDTLS/lib$libsuff
+ 
+       LDFLAGS="$LDFLAGS $addld"
+       if test "$addcflags" != "-I/usr/include"; then
+          CPPFLAGS="$CPPFLAGS $addcflags"
+       fi
+ 
+-      AC_CHECK_LIB(polarssl, ssl_init,
++      AC_CHECK_LIB(mbedtls, ssl_init,
+        [
+-       AC_DEFINE(USE_POLARSSL, 1, [if PolarSSL is enabled])
+-       AC_SUBST(USE_POLARSSL, [1])
+-       POLARSSL_ENABLED=1
+-       USE_POLARSSL="yes"
+-       curl_ssl_msg="enabled (PolarSSL)"
++       AC_DEFINE(USE_MBEDTLS, 1, [if mbedTLS is enabled])
++       AC_SUBST(USE_MBEDTLS, [1])
++       MBEDTLS_ENABLED=1
++       USE_MBEDTLS="yes"
++       curl_ssl_msg="enabled (mbedTLS)"
+        ],
+        [
+          CPPFLAGS=$_cppflags
+@@ -1902,25 +1902,25 @@ if test "$curl_ssl_msg" = "$init_ssl_msg"; then
+        ])
+     fi
+ 
+-    if test "x$USE_POLARSSL" = "xyes"; then
+-      AC_MSG_NOTICE([detected PolarSSL])
++    if test "x$USE_MBEDTLS" = "xyes"; then
++      AC_MSG_NOTICE([detected mbedTLS])
+ 
+-      LIBS="-lpolarssl $LIBS"
++      LIBS="-lmbedtls $LIBS"
+ 
+-      if test -n "$polarssllib"; then
++      if test -n "$mbedtlslib"; then
+         dnl when shared libs were found in a path that the run-time
+         dnl linker doesn't search through, we need to add it to
+         dnl LD_LIBRARY_PATH to prevent further configure tests to fail
+         dnl due to this
+         if test "x$cross_compiling" != "xyes"; then
+-          LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$polarssllib"
++          LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$mbedtlslib"
+           export LD_LIBRARY_PATH
+-          AC_MSG_NOTICE([Added $polarssllib to LD_LIBRARY_PATH])
++          AC_MSG_NOTICE([Added $mbedtlslib to LD_LIBRARY_PATH])
+         fi
+       fi
+     fi
+ 
+-  fi dnl PolarSSL not disabled
++  fi dnl mbedTLS not disabled
+ 
+ fi
+ 
+@@ -2177,9 +2177,9 @@ if test "$curl_ssl_msg" = "$init_ssl_msg"; then
+   fi
+ fi
+ 
+-if test "x$OPENSSL_ENABLED$GNUTLS_ENABLED$NSS_ENABLED$POLARSSL_ENABLED$AXTLS_ENABLED$CYASSL_ENABLED$WINSSL_ENABLED$DARWINSSL_ENABLED" = "x"; then
++if test "x$OPENSSL_ENABLED$GNUTLS_ENABLED$NSS_ENABLED$MBEDTLS_ENABLED$AXTLS_ENABLED$CYASSL_ENABLED$WINSSL_ENABLED$DARWINSSL_ENABLED" = "x"; then
+   AC_MSG_WARN([SSL disabled, you will not be able to use HTTPS, FTPS, NTLM and more.])
+-  AC_MSG_WARN([Use --with-ssl, --with-gnutls, --with-polarssl, --with-cyassl, --with-nss, --with-axtls, --with-winssl, or --with-darwinssl to address this.])
++  AC_MSG_WARN([Use --with-ssl, --with-gnutls, --with-mbedtls, --with-cyassl, --with-nss, --with-axtls, --with-winssl, or --with-darwinssl to address this.])
+ else
+   # SSL is enabled, genericly
+   AC_SUBST(SSL_ENABLED)
+@@ -2468,8 +2468,8 @@ AC_HELP_STRING([--disable-versioned-symbols], [Disable versioned symbols in shar
+           versioned_symbols_flavour="GNUTLS_"
+         elif test "x$NSS_ENABLED" = "x1"; then
+           versioned_symbols_flavour="NSS_"
+-        elif test "x$POLARSSL_ENABLED" = "x1"; then
+-          versioned_symbols_flavour="POLARSSL_"
++        elif test "x$MBEDTLS_ENABLED" = "x1"; then
++          versioned_symbols_flavour="MBEDTLS_"
+         elif test "x$CYASSL_ENABLED" = "x1"; then
+           versioned_symbols_flavour="CYASSL_"
+         elif test "x$AXTLS_ENABLED" = "x1"; then
+-- 
+2.2.1
+

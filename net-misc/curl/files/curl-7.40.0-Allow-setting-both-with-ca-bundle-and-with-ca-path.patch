@@ -1,0 +1,77 @@
+From 90314100e0880144b2d8b7f7d02c51df9d6beece Mon Sep 17 00:00:00 2001
+From: Julian Ospald <hasufell@hasufell.de>
+Date: Sat, 7 Feb 2015 22:06:40 +0100
+Subject: [PATCH] configure: allow both --with-ca-bundle and --with-ca-path
+
+SSL_CTX_load_verify_locations by default (and if given non-Null
+parameters) searches the CAfile first and falls back to CApath.  This
+allows for CAfile to be a basis (e.g. installed by the package manager)
+and CApath to be a user configured directory.
+
+This wasn't reflected by the previous configure constraint which this
+patch fixes.
+
+Bug: https://github.com/bagder/curl/pull/139
+---
+ acinclude.m4 | 9 ++++++---
+ lib/url.c    | 9 +++++++--
+ 2 files changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/acinclude.m4 b/acinclude.m4
+index 453358d..6ed7ffb 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -2607,7 +2607,8 @@ AC_HELP_STRING([--without-ca-path], [Don't use a default CA path]),
+   if test "x$want_ca" != "xno" -a "x$want_ca" != "xunset" -a \
+           "x$want_capath" != "xno" -a "x$want_capath" != "xunset"; then
+     dnl both given
+-    AC_MSG_ERROR([Can't specify both --with-ca-bundle and --with-ca-path.])
++    ca="$want_ca"
++    capath="$want_capath"
+   elif test "x$want_ca" != "xno" -a "x$want_ca" != "xunset"; then
+     dnl --with-ca-bundle given
+     ca="$want_ca"
+@@ -2669,11 +2670,13 @@ AC_HELP_STRING([--without-ca-path], [Don't use a default CA path]),
+     AC_DEFINE_UNQUOTED(CURL_CA_BUNDLE, "$ca", [Location of default ca bundle])
+     AC_SUBST(CURL_CA_BUNDLE)
+     AC_MSG_RESULT([$ca])
+-  elif test "x$capath" != "xno"; then
++  fi
++  if test "x$capath" != "xno"; then
+     CURL_CA_PATH="\"$capath\""
+     AC_DEFINE_UNQUOTED(CURL_CA_PATH, "$capath", [Location of default ca path])
+     AC_MSG_RESULT([$capath (capath)])
+-  else
++  fi
++  if test "x$ca" == "xno" && test "x$capath" == "xno"; then
+     AC_MSG_RESULT([no])
+   fi
+ ])
+diff --git a/lib/url.c b/lib/url.c
+index 407910c..0789825 100644
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -5,7 +5,7 @@
+  *                            | (__| |_| |  _ <| |___
+  *                             \___|\___/|_| \_\_____|
+  *
+- * Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
++ * Copyright (C) 1998 - 2015, Daniel Stenberg, <daniel@haxx.se>, et al.
+  *
+  * This software is licensed as described in the file COPYING, which
+  * you should have received as part of this distribution. The terms
+@@ -586,8 +586,13 @@ CURLcode Curl_init_userdefined(struct UserDefined *set)
+   /* This is our preferred CA cert bundle/path since install time */
+ #if defined(CURL_CA_BUNDLE)
+   result = setstropt(&set->str[STRING_SSL_CAFILE], (char *) CURL_CA_BUNDLE);
+-#elif defined(CURL_CA_PATH)
++  if(result)
++    return result;
++#endif
++#if defined(CURL_CA_PATH)
+   result = setstropt(&set->str[STRING_SSL_CAPATH], (char *) CURL_CA_PATH);
++  if(result)
++    return result;
+ #endif
+ 
+   set->wildcardmatch  = FALSE;
