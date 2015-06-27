@@ -1,6 +1,6 @@
 # Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/ruby/ruby-2.2.0.ebuild,v 1.3 2015/01/19 20:07:18 graaff Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-lang/ruby/ruby-2.1.6-r1.ebuild,v 1.3 2015/05/24 18:25:00 graaff Exp $
 
 EAPI=5
 
@@ -8,12 +8,15 @@ EAPI=5
 
 inherit autotools eutils flag-o-matic multilib versionator
 
+RUBYPL=$(get_version_component_range 4)
+
 MY_P="${PN}-$(get_version_component_range 1-3)"
+#MY_P="${PN}-$(get_version_component_range 1-3)-${RUBYPL:-0}"
 S=${WORKDIR}/${MY_P}
 
 SLOT=$(get_version_component_range 1-2)
 MY_SUFFIX=$(delete_version_separator 1 ${SLOT})
-RUBYVERSION=2.2.0
+RUBYVERSION=2.1.0
 
 if [[ -n ${PATCHSET} ]]; then
 	if [[ ${PVR} == ${PV} ]]; then
@@ -22,51 +25,48 @@ if [[ -n ${PATCHSET} ]]; then
 		PATCHSET="${PVR}.${PATCHSET}"
 	fi
 else
-	PATCHSET="${PV}"
+	PATCHSET="${PVR}"
 fi
 
 DESCRIPTION="An object-oriented scripting language"
 HOMEPAGE="http://www.ruby-lang.org/"
-SRC_URI="mirror://ruby/2.2/${MY_P}.tar.xz
+SRC_URI="mirror://ruby/2.1/${MY_P}.tar.xz
 		 http://dev.gentoo.org/~flameeyes/ruby-team/${PN}-patches-${PATCHSET}.tar.bz2"
 
 LICENSE="|| ( Ruby-BSD BSD-2 )"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~x86-fbsd"
-IUSE="berkdb debug doc examples gdbm ipv6 jemalloc libressl +rdoc rubytests socks5 ssl xemacs ncurses +readline"
+IUSE="berkdb debug doc examples gdbm ipv6 libressl +rdoc rubytests socks5 ssl xemacs ncurses +readline"
 
 RDEPEND="
-	berkdb? ( sys-libs/db )
+	berkdb? ( sys-libs/db:= )
 	gdbm? ( sys-libs/gdbm )
-	jemalloc? ( dev-libs/jemalloc )
 	ssl? (
 		!libressl? ( dev-libs/openssl:0 )
 		libressl? ( dev-libs/libressl:= )
 	)
 	socks5? ( >=net-proxy/dante-1.1.13 )
 	ncurses? ( sys-libs/ncurses )
-	readline?  ( sys-libs/readline )
+	readline?  ( sys-libs/readline:0 )
 	dev-libs/libyaml
 	virtual/libffi
 	sys-libs/zlib
-	>=app-eselect/eselect-ruby-20141227
+	>=app-eselect/eselect-ruby-20131227
 	!<dev-ruby/rdoc-3.9.4
 	!<dev-ruby/rubygems-1.8.10-r1"
 
 DEPEND="${RDEPEND}"
 PDEPEND="
-	virtual/rubygems[ruby_targets_ruby22]
-	>=dev-ruby/json-1.8.1[ruby_targets_ruby22]
-	>=dev-ruby/rake-0.9.6[ruby_targets_ruby22]
-	rdoc? ( >=dev-ruby/rdoc-4.0.1[ruby_targets_ruby22] )
+	virtual/rubygems[ruby_targets_ruby21]
+	>=dev-ruby/json-1.8.1[ruby_targets_ruby21]
+	>=dev-ruby/rake-0.9.6[ruby_targets_ruby21]
+	rdoc? ( >=dev-ruby/rdoc-4.0.1[ruby_targets_ruby21] )
 	xemacs? ( app-xemacs/ruby-modes )"
 
 src_prepare() {
-	excluded_patches="012_no_forced_sse2.patch"
-
 	# Add LibreSSL Support
-	epatch "${FILESDIR}"/ruby22-libressl.patch
+	epatch "${FILESDIR}/ruby19-libressl"
 
-	EPATCH_EXCLUDE="${excluded_patches}" EPATCH_FORCE="yes" EPATCH_SUFFIX="patch" \
+	EPATCH_FORCE="yes" EPATCH_SUFFIX="patch" \
 		epatch "${WORKDIR}/patches"
 
 	# We can no longer unbundle all of rake because rubygems now depends
@@ -142,7 +142,6 @@ src_configure() {
 		--enable-pthread \
 		--disable-rpath \
 		--with-out-ext="${modules}" \
-		$(use_enable jemalloc jemalloc) \
 		$(use_enable socks5 socks) \
 		$(use_enable doc install-doc) \
 		--enable-ipv6 \

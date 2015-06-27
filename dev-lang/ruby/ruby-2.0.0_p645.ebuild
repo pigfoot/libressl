@@ -1,6 +1,6 @@
 # Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/ruby/ruby-2.1.5.ebuild,v 1.3 2015/01/28 19:26:41 mgorny Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-lang/ruby/ruby-2.0.0_p645.ebuild,v 1.4 2015/04/15 04:17:46 jer Exp $
 
 EAPI=5
 
@@ -10,13 +10,12 @@ inherit autotools eutils flag-o-matic multilib versionator
 
 RUBYPL=$(get_version_component_range 4)
 
-MY_P="${PN}-$(get_version_component_range 1-3)"
-#MY_P="${PN}-$(get_version_component_range 1-3)-${RUBYPL:-0}"
+MY_P="${PN}-$(get_version_component_range 1-3)-${RUBYPL:-0}"
 S=${WORKDIR}/${MY_P}
 
 SLOT=$(get_version_component_range 1-2)
 MY_SUFFIX=$(delete_version_separator 1 ${SLOT})
-RUBYVERSION=2.1.0
+RUBYVERSION=2.0.0
 
 if [[ -n ${PATCHSET} ]]; then
 	if [[ ${PVR} == ${PV} ]]; then
@@ -25,20 +24,20 @@ if [[ -n ${PATCHSET} ]]; then
 		PATCHSET="${PVR}.${PATCHSET}"
 	fi
 else
-	PATCHSET="${PV}"
+	PATCHSET="${PVR}"
 fi
 
 DESCRIPTION="An object-oriented scripting language"
 HOMEPAGE="http://www.ruby-lang.org/"
-SRC_URI="mirror://ruby/2.1/${MY_P}.tar.xz
+SRC_URI="mirror://ruby/2.0/${MY_P}.tar.xz
 		 http://dev.gentoo.org/~flameeyes/ruby-team/${PN}-patches-${PATCHSET}.tar.bz2"
 
 LICENSE="|| ( Ruby-BSD BSD-2 )"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~x86-fbsd"
+KEYWORDS="alpha amd64 arm hppa ia64 ~mips ppc ppc64 ~s390 ~sh sparc x86 ~amd64-fbsd ~x86-fbsd"
 IUSE="berkdb debug doc examples gdbm ipv6 libressl +rdoc rubytests socks5 ssl xemacs ncurses +readline cpu_flags_x86_sse2"
 
 RDEPEND="
-	berkdb? ( sys-libs/db )
+	berkdb? ( sys-libs/db:= )
 	gdbm? ( sys-libs/gdbm )
 	ssl? (
 		!libressl? ( dev-libs/openssl:0 )
@@ -46,29 +45,29 @@ RDEPEND="
 	)
 	socks5? ( >=net-proxy/dante-1.1.13 )
 	ncurses? ( sys-libs/ncurses )
-	readline?  ( sys-libs/readline )
+	readline?  ( sys-libs/readline:0 )
 	dev-libs/libyaml
 	virtual/libffi
 	sys-libs/zlib
-	>=app-eselect/eselect-ruby-20131227
+	>=app-eselect/eselect-ruby-20100402
 	!<dev-ruby/rdoc-3.9.4
 	!<dev-ruby/rubygems-1.8.10-r1"
 
 DEPEND="${RDEPEND}"
 PDEPEND="
-	virtual/rubygems[ruby_targets_ruby21]
-	>=dev-ruby/json-1.8.1[ruby_targets_ruby21]
-	>=dev-ruby/rake-0.9.6[ruby_targets_ruby21]
-	rdoc? ( >=dev-ruby/rdoc-4.0.1[ruby_targets_ruby21] )
+	virtual/rubygems[ruby_targets_ruby20]
+	>=dev-ruby/json-1.7.7[ruby_targets_ruby20]
+	>=dev-ruby/rake-0.9.6[ruby_targets_ruby20]
+	rdoc? ( >=dev-ruby/rdoc-4.0.0[ruby_targets_ruby20] )
 	xemacs? ( app-xemacs/ruby-modes )"
 
 src_prepare() {
-	# Add LibreSSL Support
-	epatch "${FILESDIR}/ruby19-libressl"
-
 	if use cpu_flags_x86_sse2 ; then
 		excluded_patches="012_no_forced_sse2.patch"
 	fi
+
+	# Add LibreSSL Support
+	epatch "${FILESDIR}/ruby19-libressl"
 
 	EPATCH_EXCLUDE="${excluded_patches}" EPATCH_FORCE="yes" EPATCH_SUFFIX="patch" \
 		epatch "${WORKDIR}/patches"
