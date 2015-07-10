@@ -11,7 +11,7 @@ HOMEPAGE="http://www.libressl.org/"
 SRC_URI="http://ftp.openbsd.org/pub/OpenBSD/LibreSSL/${P}.tar.gz"
 
 LICENSE="ISC openssl"
-SLOT="0/33"
+SLOT="0/34"
 KEYWORDS="~amd64 ~mips ~ppc ~ppc64 ~x86"
 IUSE="+asm static-libs"
 
@@ -28,8 +28,6 @@ PDEPEND="app-misc/ca-certificates"
 
 src_prepare() {
 	touch crypto/Makefile.in
-
-	epatch "${FILESDIR}"/${P}-musl.patch
 
 	sed -i \
 		-e '/^[ \t]*CFLAGS=/s#-g ##' \
